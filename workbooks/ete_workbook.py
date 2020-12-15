@@ -1,6 +1,8 @@
 from ete3 import Tree
 
 """
+Various things related to the ete3 package.
+
 Of interest:
 Short-leaf branch
 Longest-leaf branch

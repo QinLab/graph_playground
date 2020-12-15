@@ -1,0 +1,13 @@
+Links to web resources on the subject.
+
+# General overview
+https://towardsdatascience.com/10-graph-algorithms-visually-explained-e57faa1336f3
+
+# Python relevant/from scratch
+https://www.python-course.eu/graphs_python.php
+
+# Seems like a good existing tree related python lib. Has a tutorial.
+http://etetoolkit.org/docs/latest/index.html
+
+# Plotting SO Thread
+https://stackoverflow.com/questions/7670280/tree-plotting-in-python

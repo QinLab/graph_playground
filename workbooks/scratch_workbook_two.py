@@ -90,6 +90,10 @@ class Graph(object):
         return branch_dict
 
     def find_longest_branch_2(self):
+        """
+        This appears to be the "right" answer. So were somewhat on track.
+        https://www.geeksforgeeks.org/longest-path-undirected-tree/
+        """
         branch_dict = {}
 
         # Iterate though all the nodes
@@ -160,7 +164,6 @@ class Graph(object):
                 if until_path_increment == 0:
                     until_path_increment = len(check_queue)
                     path_distance_to_node += 1
-
 
             branch_dict[node]["primary_edges"] = set(primary_edges)
             branch_dict[node]["secondary_edges"] = set(secondary_edges)

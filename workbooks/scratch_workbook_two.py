@@ -141,24 +141,28 @@ class Graph(object):
             branch_dict[node]["secondary_edges"] = set(secondary_edges)
             branch_dict[node]["secondary_edges_with_distance"] = set(secondary_node_distance)
 
-            max_distance = 0
-            max_branches = [(k, k, max_distance) for k in branch_dict]
-            for node in branch_dict:
-                if not branch_dict[node]["primary_edges"]:
-                    continue
-                max_node_dis = max(v[1] for v in branch_dict[node]["secondary_edges_with_distance"])
-                max_nodes = list(filter(lambda x: x[1] == max_node_dis, branch_dict[node]["secondary_edges_with_distance"]))
-                print(max_node_dis)
-                if max_node_dis > max_distance:
-                    max_distance = max_node_dis
-                    max_branches = [[node]+list(v) for v in max_nodes]
-                    continue
-                if max_node_dis == max_distance:
-                    max_branches += [[node]+list(v) for v in max_nodes]
+        # Calc Max Distances
+        max_distance = 0
+        max_branches = [(k, k, max_distance) for k in branch_dict]
+        for node in branch_dict:
+            if not branch_dict[node]["primary_edges"]:
+                continue
+            max_node_dis = max(v[1] for v in branch_dict[node]["secondary_edges_with_distance"])
+            max_nodes = list(filter(lambda x: x[1] == max_node_dis, branch_dict[node]["secondary_edges_with_distance"]))
+            print(max_node_dis)
+            if max_node_dis > max_distance:
+                max_distance = max_node_dis
+                max_branches = [[node]+list(v) for v in max_nodes]
+                continue
+            if max_node_dis == max_distance:
+                max_branches += [[node]+list(v) for v in max_nodes]
 
-            print("Distance")
-            print(max_distance)
-            print(max_branches)
+        # print("Distance")
+        # print(max_distance)
+        # print(max_branches)
+
+        branch_dict["max_distance"] = max_distance
+        branch_dict["max_branches"] = max_branches
 
         return branch_dict
 

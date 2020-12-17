@@ -4,6 +4,8 @@ from utility import load_csv
 Building/Traversing Graphs/Trees from scratch.
 
 This is me messing around without much background reading on the subject to get a rough idea of whats going on.
+
+NOTE: Ignore this for now, switched over to scratch_workbook_two.py
 """
 
 class Node:
@@ -74,8 +76,6 @@ class Tree:
 
 
         return child_nodes
-
-
 
 
     def __str__(self):

@@ -1,5 +1,8 @@
 import sys
 
+"""
+Pulled from web somewhere, haven't look much into this one.
+"""
 
 class Graph():
     def __init__(self, vertices):

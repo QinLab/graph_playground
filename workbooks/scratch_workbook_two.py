@@ -2,9 +2,11 @@
 
 
 """
-A Python Class
-A simple Python graph class, demonstrating the essential
-facts and functionalities of graphs.
+Building/Traversing Graphs/Trees from scratch.
+
+This is me messing around without much background reading on the subject to get a rough idea of whats going on.
+
+Graph class copied from web and I've been using it to build off of.
 """
 
 
@@ -57,41 +59,11 @@ class Graph(object):
                     edges.append({vertex, neighbour})
         return edges
 
-    def find_longest_branch_1(self):
-        branch_dict = {}
-
-        # Iterate though all the nodes
-        for node in self.graph_dict:
-            print(node)
-            branch_dict[node] = {}
-            primary_edges = []
-            secondary_edges = []
-            # For each edges
-            check_queue = []
-            for conn_node in self.graph_dict[node]:
-                primary_edges.append((conn_node, node))
-                check_queue.append(conn_node)
-            print(primary_edges)
-            while check_queue:
-                print(len(check_queue))
-                print(check_queue)
-                check_node = check_queue[0]
-                del check_queue[0]
-                for check_conn_node in self.graph_dict[check_node]:
-                    new_edge = (conn_node, check_conn_node)
-                    if new_edge not in secondary_edges and new_edge not in primary_edges:
-                        secondary_edges.append((conn_node, check_conn_node))
-                        check_queue.append(check_conn_node)
-                # input("")
-
-            branch_dict[node]["primary_edges"] = set(primary_edges)
-            branch_dict[node]["secondary_edges"] = set(secondary_edges)
-
-        return branch_dict
-
-    def find_longest_branch_2(self):
+    def find_longest_branch(self):
         """
-        This appears to be the "right" answer. So were somewhat on track.
+        Took a couple hours to work through this but looks to be working. Need to clean it up some.
+
+        I found a "correct" implementation and it appears to be similar, so look to be on the right track.
         https://www.geeksforgeeks.org/longest-path-undirected-tree/
         """
         branch_dict = {}
@@ -196,7 +168,7 @@ class Graph(object):
         for k in self.graph_dict:
             res += str(k) + " "
         res += "\nedges: "
-        for edge in self.__generate_edges():
+        for edge in self.generate_edges():
             res += str(edge) + " "
         return res
 
@@ -243,6 +215,6 @@ if __name__ == "__main__":
     # print(graph.get_edges())
 
     print("AHH")
-    a = graph.find_longest_branch_2()
+    a = graph.find_longest_branch()
     print(a)
 

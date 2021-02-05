@@ -1,6 +1,6 @@
 import pandas as pd
 import math
-from scratch_workbook_two import Graph
+from .graph import Graph
 
 """
 Doc Doc Doc
@@ -11,11 +11,7 @@ Notes:
 Split occurs when multiple objs exist in same trap and share the same predeccorID?
 """
 
-# def print_yolo_row(r):
-
-
-
-class YoloCellCSV:
+class YoloCSV:
 
     def __init__(self, file_path):
         self.file_path = file_path
@@ -47,7 +43,7 @@ class YoloCellCSV:
 
         for trap in self.df["trap_num"].unique():
             pred_ids = self.df.query("trap_num == {}".format(trap))["predecessorID"].unique()
-            print(trap, pred_ids)
+         #   print(trap, pred_ids)
 
     def describe_trap(self, trap_num, t_start=None, t_stop=None, pred_id=None):
         """
@@ -93,11 +89,10 @@ class YoloCellCSV:
         if query[0] == " ":
             query = query[5:]
 
-        print(query)
+        # print(query)
         return self.df.query(query)
 
-
-    def df_to_tree_dict_two(self):
+    def df_to_graph_dict(self):
         """
                 g = {"a": ["d"],
                  "b": ["c", "f"],
@@ -110,10 +105,9 @@ class YoloCellCSV:
                  }
         """
 
-        tree_dict = {}
+        graph_dict = {}
 
         df = self.query(trap_num=1, t_start=0, t_stop=30)
-
 
         last_node_name = None
         last_pred_id = None
@@ -130,18 +124,18 @@ class YoloCellCSV:
 
             # In Length Just One, No Branching
             if len_time_step == 1:
-                print("Single Time Step")
+             #   print("Single Time Step")
                 vals = time_df.to_dict('records')[0]
                 pred_id = vals["predecessorID"]
                 if math.isnan(pred_id):
-                #    print("NaN: ", pred_id)
+                    #    print("NaN: ", pred_id)
                     pred_id = 1
 
                 node_name = "{}.{}".format(vals["time_num"], int(pred_id))
-                tree_dict[node_name] = []
+                graph_dict[node_name] = []
                 if last_node_name:
-                    tree_dict[node_name].append(last_node_name)
-                    tree_dict[last_node_name].append(node_name)
+                    graph_dict[node_name].append(last_node_name)
+                    graph_dict[last_node_name].append(node_name)
 
                 last_node_name = node_name
                 last_pred_id = pred_id
@@ -153,18 +147,18 @@ class YoloCellCSV:
             step_info = [list(x) for x in set(tuple(x) for x in step_info)]
             # Branch at this node.
             if len(step_info) == 1:
-                print("New Branch Time Step")
+            #    print("New Branch Time Step")
                 vals = time_df.to_dict('records')[0]
                 pred_id = vals["predecessorID"]
-                #if math.isnan(pred_id):
-                    #    print("NaN: ", pred_id)
-                    #pred_id = 1
+                # if math.isnan(pred_id):
+                #    print("NaN: ", pred_id)
+                # pred_id = 1
 
                 node_name = "{}.{}".format(vals["time_num"], int(pred_id))
-                tree_dict[node_name] = []
+                graph_dict[node_name] = []
                 if last_node_name:
-                    tree_dict[node_name].append(last_node_name)
-                    tree_dict[last_node_name].append(node_name)
+                    graph_dict[node_name].append(last_node_name)
+                    graph_dict[last_node_name].append(node_name)
 
                 last_node_name = node_name
                 last_pred_id = pred_id
@@ -172,67 +166,69 @@ class YoloCellCSV:
                 last_branch_pred_id = pred_id
                 continue
 
-            print("Co-existing Time Stamp")
+            #print("Co-existing Time Stamp")
             for i, v in time_df.iterrows():
-                print(v.astype(str).values.flatten().tolist())
+               #  print(v.astype(str).values.flatten().tolist())
                 time_num = v["time_num"]
                 pred_id = v["predecessorID"]
                 # Edge Case
                 if math.isnan(pred_id):
-                    print("NaN: ", v)
+                #    print("NaN: ", v)
                     pred_id = 1.0
 
                 node_name = "{}.{}".format(int(time_num), int(pred_id))
 
                 if pred_id == last_branch_pred_id:
-                    if node_name not in tree_dict:
-                        tree_dict[node_name] = []
-                        tree_dict[node_name].append(last_node_name)
-                        tree_dict[last_node_name].append(node_name)
+                    if node_name not in graph_dict:
+                        graph_dict[node_name] = []
+                        graph_dict[node_name].append(last_node_name)
+                        graph_dict[last_node_name].append(node_name)
                         last_node_name = node_name
                         last_pred_id = pred_id
                 else:
-                    if node_name not in tree_dict:
-                        tree_dict[node_name] = []
-                        tree_dict[node_name].append(last_branch_node_name)
-                        tree_dict[last_branch_node_name].append(node_name)
+                    if node_name not in graph_dict:
+                        graph_dict[node_name] = []
+                        graph_dict[node_name].append(last_branch_node_name)
+                        graph_dict[last_branch_node_name].append(node_name)
                         last_branch_node_name = node_name
                         last_branch_node_name = node_name
                         last_brand_pred_id = pred_id
-        #
-        #
-        #
-        print("*")
-        print(tree_dict)
 
-        print("*")
-        for i, v in df.iterrows():
-            print(v.astype(str).values.flatten().tolist())
 
-        # a = Graph(tree_dict)
-        # branch = a.find_longest_branch()
+
+        return graph_dict
+
+        #
         #
         # print("*")
-        # print(branch)
+        # print(tree_dict)
+        #
+        # print("*")
+        # for i, v in df.iterrows():
+        #     print(v.astype(str).values.flatten().tolist())
 
-
+            # a = Graph(tree_dict)
+            # branch = a.find_longest_branch()
+            #
+            # print("*")
+            # print(branch)
 
 
 def main():
 
-    cats = YoloCellCSV("FT_BC8_yolo_short.csv")
-    # cats.describe_all()
-    # cats.describe_trap(1, t_start=0, t_stop=12, pred_id=1)
-
-    # a = cats.query(trap_num=1, t_start=0, t_stop=10)
-    # print(a.columns.tolist())
-    # for i, v in a.iterrows():
-    #     print(v.astype(str).values.flatten().tolist())
-
-    # YoloCellCSV.df_to_tree_dict(a)
-
-    cats.df_to_tree_dict_two()
-
+    pass
+    # cats = YoloCellCSV("FT_BC8_yolo_short.csv")
+    # # cats.describe_all()
+    # # cats.describe_trap(1, t_start=0, t_stop=12, pred_id=1)
+    #
+    # # a = cats.query(trap_num=1, t_start=0, t_stop=10)
+    # # print(a.columns.tolist())
+    # # for i, v in a.iterrows():
+    # #     print(v.astype(str).values.flatten().tolist())
+    #
+    # # YoloCellCSV.df_to_tree_dict(a)
+    #
+    # cats.df_to_tree_dict_two()
 
 
 if __name__ == "__main__":

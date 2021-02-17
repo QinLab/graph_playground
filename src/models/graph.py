@@ -50,20 +50,22 @@ class Graph:
                     edges.append({node, neighbour})
         return edges
 
-    def _make_branch_dict(self, verbose=False):
+    def _make_branch_dict(self, verbose=True):
         """
-        Took a couple hours to work through this but looks to be working. Need to clean it up some.
+        Doc Doc Doc
 
-        I found a "correct" implementation and it appears to be similar, so look to be on the right track.
+        "Correct" implementation here, appears to be similar. But going to continue w/ from scratch for now.
         https://www.geeksforgeeks.org/longest-path-undirected-tree/
         """
+
         branch_dict = {}
 
-        # Iterate though all the nodes
+        # Iterate though all the nodes(keys)
         for node in self.graph_dict:
             if verbose:
                 print("*-------NODE", node)
 
+            #
             branch_dict[node] = {}
             primary_edges = []
             secondary_edges = []
@@ -188,9 +190,10 @@ class Graph:
         main_edge_nodes = {v[0] for v in self.info["main_edge"]}
         leaf_nodes = terminal_nodes.difference(main_edge_nodes)
 
-        # print(terminal_nodes)
-        # print(main_edge_nodes)
-        # print(leaf_nodes)
+        print("Leaf")
+        print(terminal_nodes)
+        print(main_edge_nodes)
+        print(leaf_nodes)
         #print(self.branch_dict)
 
 if __name__ == "__main__":

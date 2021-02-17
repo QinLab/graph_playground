@@ -1,6 +1,6 @@
 import pandas as pd
 import math
-from .graph import Graph
+import sys
 
 """
 Doc Doc Doc
@@ -9,6 +9,7 @@ Doc Doc Doc
 Notes:
 
 Split occurs when multiple objs exist in same trap and share the same predeccorID?
+Ask about Trap #4 (and how traps are related).
 """
 
 class YoloCSV:
@@ -20,11 +21,11 @@ class YoloCSV:
 
     def _on_init(self):
         self.df = pd.read_csv(self.file_path)
-        # self.df = self.df.fillna(1).astype(int)     # Done mainly set that first NA predecessorID to 1 (I think that's ok?)
-        ## ^^ Will revist.
 
     def describe_all(self):
         """
+        Currently not used.
+
         Just getting familiar w/ the data/taking a look at various relationships.
 
         Some notes
@@ -47,6 +48,8 @@ class YoloCSV:
 
     def describe_trap(self, trap_num, t_start=None, t_stop=None, pred_id=None):
         """
+        Currently not used.
+
         Queries a specific trap. Optional args from narrowing down time period and pred_id
 
         -- Mostly replaced w/ self.query(), prob change this to something else
@@ -65,6 +68,9 @@ class YoloCSV:
         print(len(df.index))
 
     def query(self, trap_num=None, t_start=None, t_stop=None, total_objs=None, pred_id=None):
+        """
+        Easy way to query the full .csv/df.
+        """
 
         query = ""
 
@@ -85,152 +91,114 @@ class YoloCSV:
         if pred_id:
             query += " and predecessorID == {}".format(pred_id)
 
-        # Clean Up
         if query[0] == " ":
             query = query[5:]
 
-        # print(query)
         return self.df.query(query)
 
-    def df_to_graph_dict(self):
+    def to_graph_dict(self, trap_num, t_stop):
         """
-                g = {"a": ["d"],
-                 "b": ["c", "f"],
-                 "c": ["b", "c", "d", "e"],
-                 "d": ["a", "c"],
-                 "e": ["c"],
-                 "f": [],
-            #    "g": ["f"],
-             #   "z": ["f"]
-                 }
+        Attempts to parse a yolo.csv into a tree data structure that can then be used for further analysis.
+        Good amount of in-line doc to cover how its done.
+
+        Note: Currently not safe for all scenarios. Built using only trap == 1 w/ t_stop of ~30. Will likely need
+        to re-write a good deal, but wanted to get something up and going that could be used with some visual tools
+        before continuing.
         """
 
         graph_dict = {}
 
-        df = self.query(trap_num=1, t_start=0, t_stop=30)
+        # Return a copy of the source data filtered to specific trap number and t_stop.
+        df = self.query(trap_num=trap_num, t_start=0, t_stop=t_stop)
 
+        # Some variables used in parsing the above df.
         last_node_name = None
-        last_pred_id = None
-
         last_branch_node_name = None
         last_branch_pred_id = None
 
+        # We are interested in changes that occur between time steps. So will create sub-df's using those times.
         for t in df["time_num"].unique():
 
+            # Run another filter of our initial filtered df from above on loop time step.
             time_df = df.query("time_num == {}".format(t))
-            # print(t, len(time_df.index))
 
+            # The number of data points per time-step dictates behavior.
             len_time_step = len(time_df.index)
 
-            # In Length Just One, No Branching
+            # Length of 1 indicates no branching and/or start.
             if len_time_step == 1:
-             #   print("Single Time Step")
-                vals = time_df.to_dict('records')[0]
-                pred_id = vals["predecessorID"]
+
+                # Basically gets this "row" into a dictionary.
+                val = time_df.to_dict('records')[0]
+                pred_id = val["predecessorID"]
+                time_num = val["time_num"]
+
+                # Edge-case for 1st row. No Pred ID/isNan for that. Assumption that is can be hard-coded to 1. ASK.
                 if math.isnan(pred_id):
-                    #    print("NaN: ", pred_id)
                     pred_id = 1
 
-                node_name = "{}.{}".format(vals["time_num"], int(pred_id))
+                # Node name is time_num.pred_id
+                node_name = "{}.{}".format(int(time_num), int(pred_id))
+
+                # Create entry for this node_name in our graph_dict.
                 graph_dict[node_name] = []
+
+                # Check if previous node, attach to that if found. Assumes if 1 previous and 1 current, this is an
+                # extension of the main branch. ASK.
                 if last_node_name:
                     graph_dict[node_name].append(last_node_name)
                     graph_dict[last_node_name].append(node_name)
 
+                # Set last_node_name to current. Continue to next time_step
                 last_node_name = node_name
-                last_pred_id = pred_id
                 continue
 
-            # Branching
+            # Branching. len_time_step != 1, so there are multiple data points at this step.
+            # First lets see if both data points share the same values.
             step_info = time_df.to_dict('records')
             step_info = [[step_info[k] for k in step_info] for step_info in step_info]
             step_info = [list(x) for x in set(tuple(x) for x in step_info)]
-            # Branch at this node.
-            if len(step_info) == 1:
-            #    print("New Branch Time Step")
-                vals = time_df.to_dict('records')[0]
-                pred_id = vals["predecessorID"]
-                # if math.isnan(pred_id):
-                #    print("NaN: ", pred_id)
-                # pred_id = 1
 
-                node_name = "{}.{}".format(vals["time_num"], int(pred_id))
+            # If step_info == 1, both data points are the same. We only need 1. This represents the start of new branch.
+            # NOTE: Logic here may fail later on w/ branching occurring in branches... Will need to revisit...
+            if len(step_info) == 1:
+
+                # Similar logic to above. (len_time_step == 1).
+                val = time_df.to_dict('records')[0]
+                pred_id = val["predecessorID"]
+                time_num = val["time_num"]
+                node_name = "{}.{}".format(int(time_num), int(pred_id))
                 graph_dict[node_name] = []
                 if last_node_name:
                     graph_dict[node_name].append(last_node_name)
                     graph_dict[last_node_name].append(node_name)
 
                 last_node_name = node_name
-                last_pred_id = pred_id
+
+                # Track where this branch started on the main branch. Continue to next time_step.
                 last_branch_node_name = node_name
                 last_branch_pred_id = pred_id
                 continue
 
-            #print("Co-existing Time Stamp")
-            for i, v in time_df.iterrows():
-               #  print(v.astype(str).values.flatten().tolist())
-                time_num = v["time_num"]
-                pred_id = v["predecessorID"]
-                # Edge Case
-                if math.isnan(pred_id):
-                #    print("NaN: ", v)
-                    pred_id = 1.0
+            # Multiple unique data points exist at this time step. So both main and daughter branches will update.
+            # NOTE: As above, logic here may fail later on w/ branching occurring in branches... Will need to revisit...
+            for i, val in time_df.iterrows():
 
+                pred_id = val["predecessorID"]
+                time_num = val["time_num"]
                 node_name = "{}.{}".format(int(time_num), int(pred_id))
 
+                # Checks to see if continuation of main branch, else daughter branch.
                 if pred_id == last_branch_pred_id:
-                    if node_name not in graph_dict:
-                        graph_dict[node_name] = []
-                        graph_dict[node_name].append(last_node_name)
-                        graph_dict[last_node_name].append(node_name)
-                        last_node_name = node_name
-                        last_pred_id = pred_id
+                    graph_dict[node_name] = []
+                    graph_dict[node_name].append(last_node_name)
+                    graph_dict[last_node_name].append(node_name)
+                    last_node_name = node_name
                 else:
-                    if node_name not in graph_dict:
-                        graph_dict[node_name] = []
-                        graph_dict[node_name].append(last_branch_node_name)
-                        graph_dict[last_branch_node_name].append(node_name)
-                        last_branch_node_name = node_name
-                        last_branch_node_name = node_name
-                        last_brand_pred_id = pred_id
-
+                    graph_dict[node_name] = []
+                    graph_dict[node_name].append(last_branch_node_name)
+                    graph_dict[last_branch_node_name].append(node_name)
+                    last_branch_node_name = node_name
 
 
         return graph_dict
-
-        #
-        #
-        # print("*")
-        # print(tree_dict)
-        #
-        # print("*")
-        # for i, v in df.iterrows():
-        #     print(v.astype(str).values.flatten().tolist())
-
-            # a = Graph(tree_dict)
-            # branch = a.find_longest_branch()
-            #
-            # print("*")
-            # print(branch)
-
-
-def main():
-
-    pass
-    # cats = YoloCellCSV("FT_BC8_yolo_short.csv")
-    # # cats.describe_all()
-    # # cats.describe_trap(1, t_start=0, t_stop=12, pred_id=1)
-    #
-    # # a = cats.query(trap_num=1, t_start=0, t_stop=10)
-    # # print(a.columns.tolist())
-    # # for i, v in a.iterrows():
-    # #     print(v.astype(str).values.flatten().tolist())
-    #
-    # # YoloCellCSV.df_to_tree_dict(a)
-    #
-    # cats.df_to_tree_dict_two()
-
-
-if __name__ == "__main__":
-
-    main()

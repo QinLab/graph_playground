@@ -67,7 +67,7 @@ class YoloCSV:
 
         print(len(df.index))
 
-    def query(self, trap_num=None, t_start=None, t_stop=None, total_objs=None, pred_id=None):
+    def query(self, trap_num=None, t_start=None, t_stop=None, total_objs=None, pred_id=None, write_csv=False):
         """
         Easy way to query the full .csv/df.
         """
@@ -94,7 +94,12 @@ class YoloCSV:
         if query[0] == " ":
             query = query[5:]
 
-        return self.df.query(query)
+        res = self.df.query(query)
+
+        if write_csv:
+            res.to_csv("data/recent_query.csv", index=False)
+
+        return res
 
     def to_graph_dict(self, trap_num, t_stop):
         """
@@ -109,7 +114,7 @@ class YoloCSV:
         graph_dict = {}
 
         # Return a copy of the source data filtered to specific trap number and t_stop.
-        df = self.query(trap_num=trap_num, t_start=0, t_stop=t_stop)
+        df = self.query(trap_num=trap_num, t_start=0, t_stop=t_stop, write_csv=True)
 
         # Some variables used in parsing the above df.
         last_node_name = None
@@ -201,4 +206,5 @@ class YoloCSV:
                     last_branch_node_name = node_name
 
 
-        return graph_dict
+        return graph_dict, {"trap_num": trap_num, "t_stop": t_stop}  # Will prob clean this up, but this was quick..
+

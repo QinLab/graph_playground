@@ -23,7 +23,9 @@ def graph_to_i_graph(graph_dict):
 
     # Now lets add some edges
     for n in graph_dict:
+        print(n)
         edges = graph_dict[n]
+        print(edges)
         parent_i = node_index_lu[n]
         children_i = [node_index_lu[n] for n in edges]
         i_graph.add_edges([(parent_i, c_i) for c_i in children_i])
@@ -62,6 +64,12 @@ def graph_to_i_graph(graph_dict):
                              line=dict(color='rgb(210,210,210)', width=1),
                              hoverinfo='none'
                              ))
+
+    print("XN", Xn)
+    print("Yn", Yn)
+    print(labels)
+
+
     fig.add_trace(go.Scatter(x=Xn,
                              y=Yn,
                              mode='markers',

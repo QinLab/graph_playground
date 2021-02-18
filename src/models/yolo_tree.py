@@ -26,6 +26,7 @@ class YoloTree:
         # Main branch will start from these. Possible multiple, but haven't tried that yet. Trap 4?
         root_nodes = [k for k in self.graph_dict if k.split(".", 1)[0] == "1"]
         self.tree_info["root_nodes"] = root_nodes
+        self.tree_info["branch_edges"] = []
 
         self._populate_tree_dict()
 
@@ -68,12 +69,8 @@ class YoloTree:
                     # Change + difference in time means we need to track a new branch.
                     if int(edge.split(".", 1)[0]) > int(node.split(".", 1)[0]):
                         self.tree_dict[edge] = []
+                        self.tree_info["branch_edges"].append([node, edge])
                         branch_nodes.append(edge)
-
-    def _populate_tree_info(self):
-        """
-        Doc Doc Doc
-        """
 
 
 

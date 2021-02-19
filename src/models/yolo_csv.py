@@ -121,6 +121,10 @@ class YoloCSV:
         last_branch_node_name = None
         last_branch_pred_id = None
 
+        # *** Updated To Track From Pred ID
+        pred_last_lu = {}
+        root_pred_ids = []
+
         # We are interested in changes that occur between time steps. So will create sub-df's using those times.
         for t in df["time_num"].unique():
 
@@ -142,69 +146,183 @@ class YoloCSV:
                 if math.isnan(pred_id):
                     pred_id = 1
 
+                # Will need to update this to handle Traps w/ multiple main branches
+                root_pred_ids.append(pred_id)
+                # *** Update Start
+                # *** Track Pred ID
+                if pred_id not in pred_last_lu:
+                    pred_last_lu[pred_id] = {}
+                    pred_last_lu[pred_id]["last_node_name"] = None
+                # *** Update End
+
                 # Node name is time_num.pred_id
                 node_name = "{}.{}".format(int(time_num), int(pred_id))
 
                 # Create entry for this node_name in our graph_dict.
                 graph_dict[node_name] = []
 
-                # Check if previous node, attach to that if found. Assumes if 1 previous and 1 current, this is an
-                # extension of the main branch. ASK.
-                if last_node_name:
+                # # Check if previous node, attach to that if found. Assumes if 1 previous and 1 current, this is an
+                # # extension of the main branch. ASK.
+                # if last_node_name:
+                #     graph_dict[node_name].append(last_node_name)
+                #     graph_dict[last_node_name].append(node_name)
+                #
+                # # Set last_node_name to current. Continue to next time_step
+                # last_node_name = node_name
+
+                # *** Update Start
+                if pred_last_lu[pred_id]["last_node_name"]:
+                    last_node_name = pred_last_lu[pred_id]["last_node_name"]
                     graph_dict[node_name].append(last_node_name)
                     graph_dict[last_node_name].append(node_name)
 
-                # Set last_node_name to current. Continue to next time_step
-                last_node_name = node_name
+                pred_last_lu[pred_id]["last_node_name"] = node_name
+
+                # Clear non-root pred_id's - Important
+                # for k in list(pred_last_lu.keys()):
+                #     if k not in root_pred_ids:
+                #         del pred_last_lu[k]
+
+                # *** Update End
                 continue
 
             # Branching. len_time_step != 1, so there are multiple data points at this step.
-            # First lets see if both data points share the same values.
+            # First lets see if data points share the same values.
             step_info = time_df.to_dict('records')
             step_info = [[step_info[k] for k in step_info] for step_info in step_info]
+
+            # Two or more identical steps indicates the start of a new branch at that node
+            new_steps = []
+            # Different steps are continuations of existing path.
+            continue_steps = []
+
+            for v in step_info:
+                c_count = step_info.count(v)
+                if c_count >= 2:
+                    new_steps.append(v)
+                    continue
+                continue_steps.append(v)
+
+            new_steps = [list(x) for x in set(tuple(x) for x in new_steps)]
+            continue_steps = [list(x) for x in set(tuple(x) for x in continue_steps)]
             step_info = [list(x) for x in set(tuple(x) for x in step_info)]
+
+            # Important - YoloGraph expects incrementing order
+            new_steps = sorted(new_steps, key=lambda x: x[3])
+            continue_steps = sorted(continue_steps, key=lambda x: x[3])
+
+            # Important
+            step_pred_ids = set([v[3] for v in step_info])
+            # Clear non-root pred_id's - Important
+            for k in list(pred_last_lu.keys()):
+                if k not in root_pred_ids + list(step_pred_ids):
+                    del pred_last_lu[k]
 
             # If step_info == 1, both data points are the same. We only need 1. This represents the start of new branch.
             # NOTE: Logic here may fail later on w/ branching occurring in branches... Will need to revisit...
-            if len(step_info) == 1:
 
-                # Similar logic to above. (len_time_step == 1).
-                val = time_df.to_dict('records')[0]
-                pred_id = val["predecessorID"]
-                time_num = val["time_num"]
+            # *** Update Start
+
+            # Prob should move these back to dictionaries...
+            # print("AHHH")
+            for v in new_steps:
+                print("NEW STEP", v)
+                pred_id = v[3]
+                time_num = v[1]
                 node_name = "{}.{}".format(int(time_num), int(pred_id))
                 graph_dict[node_name] = []
-                if last_node_name:
-                    graph_dict[node_name].append(last_node_name)
-                    graph_dict[last_node_name].append(node_name)
+                last_node_name = pred_last_lu[pred_id]["last_node_name"]
+                graph_dict[node_name].append(last_node_name)
+                graph_dict[last_node_name].append(node_name)
 
-                last_node_name = node_name
+                last_branch_pred_id = pred_id                           # Could break, will need to watch
+                pred_last_lu[pred_id]["last_node_name"] = node_name
 
-                # Track where this branch started on the main branch. Continue to next time_step.
-                last_branch_node_name = node_name
-                last_branch_pred_id = pred_id
-                continue
+            for v in continue_steps:
 
-            # Multiple unique data points exist at this time step. So both main and daughter branches will update.
-            # NOTE: As above, logic here may fail later on w/ branching occurring in branches... Will need to revisit...
-            for i, val in time_df.iterrows():
-
-                pred_id = val["predecessorID"]
-                time_num = val["time_num"]
+                print(v)
+                pred_id = v[3]
+                time_num = v[1]
                 node_name = "{}.{}".format(int(time_num), int(pred_id))
+                graph_dict[node_name] = []
+                try:
+                    last_node_name = pred_last_lu[pred_id]["last_node_name"]
+                except KeyError:
+                    print("Error", pred_last_lu)
+                    last_node_name = pred_last_lu[last_branch_pred_id]["last_node_name"]
+                    # Check if same timestep, if so subtract one from from last_node_name
+                    if int(time_num) == int(last_node_name.split(".", 1)[0]):
+                        last_node_name = last_node_name.replace("{}.".format(time_num), "{}.".format(str(int(time_num)-1)))
+                    print(last_node_name)
+                    pred_last_lu[pred_id] = {}
+                    pred_last_lu[pred_id]["last_node_name"] = None
+                graph_dict[node_name].append(last_node_name)
+                graph_dict[last_node_name].append(node_name)
+                pred_last_lu[pred_id]["last_node_name"] = node_name
 
-                # Checks to see if continuation of main branch, else daughter branch.
-                if pred_id == last_branch_pred_id:
-                    graph_dict[node_name] = []
-                    graph_dict[node_name].append(last_node_name)
-                    graph_dict[last_node_name].append(node_name)
-                    last_node_name = node_name
-                else:
-                    graph_dict[node_name] = []
-                    graph_dict[node_name].append(last_branch_node_name)
-                    graph_dict[last_branch_node_name].append(node_name)
-                    last_branch_node_name = node_name
 
+
+
+
+
+            # *** Update End
+
+            # if len(step_info) == 1:
+            #
+            #     # Similar logic to above. (len_time_step == 1).
+            #     val = time_df.to_dict('records')[0]
+            #     pred_id = val["predecessorID"]
+            #     time_num = val["time_num"]
+            #     node_name = "{}.{}".format(int(time_num), int(pred_id))
+            #     graph_dict[node_name] = []
+            #     # if last_node_name:
+            #     #     graph_dict[node_name].append(last_node_name)
+            #     #     graph_dict[last_node_name].append(node_name)
+            #     #
+            #     # last_node_name = node_name
+            #
+            #     # *** Update Start
+            #     if pred_last_lu[pred_id]["last_node_name"]:
+            #         last_node_name = pred_last_lu[pred_id]["last_node_name"]
+            #         graph_dict[node_name].append(last_node_name)
+            #         graph_dict[last_node_name].append(node_name)
+            #
+            #     pred_last_lu[pred_id]["last_node_name"] = node_name
+            #
+            #     # *** Update End
+            #     # continue
+            #
+            #
+            #     # Track where this branch started on the main branch. Continue to next time_step.
+            #     # last_branch_node_name = node_name
+            #     # last_branch_pred_id = pred_id
+            #     continue
+            #
+            # # Multiple unique data points exist at this time step. So both main and daughter branches will update.
+            # # NOTE: As above, logic here may fail later on w/ branching occurring in branches... Will need to revisit...
+            # for i, val in time_df.iterrows():
+            #
+            #     pred_id = val["predecessorID"]
+            #     time_num = val["time_num"]
+            #     node_name = "{}.{}".format(int(time_num), int(pred_id))
+            #
+            #     # Checks to see if continuation of main branch, else daughter branch.
+            #     if pred_id == last_branch_pred_id:
+            #         graph_dict[node_name] = []
+            #         graph_dict[node_name].append(last_node_name)
+            #         graph_dict[last_node_name].append(node_name)
+            #         last_node_name = node_name
+            #     else:
+            #         graph_dict[node_name] = []
+            #         graph_dict[node_name].append(last_branch_node_name)
+            #         graph_dict[last_branch_node_name].append(node_name)
+            #         last_branch_node_name = node_name
+
+        # Fixing a conflict in yolo_graph, will have to see
+        for k in graph_dict:
+            graph_dict[k] = sorted(graph_dict[k])
+
+        print(graph_dict)
 
         return graph_dict, {"trap_num": trap_num, "t_stop": t_stop}  # Will prob clean this up, but this was quick..
 

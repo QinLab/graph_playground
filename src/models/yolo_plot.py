@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import sys
 
 """
 
@@ -144,7 +145,14 @@ class YoloPlot:
             main_root_node_y = None
             for r_n in self.yolo_tree.tree_dict:
                 if main_daughter_edge[0] in self.yolo_tree.tree_dict[r_n]:
-                    main_root_node_y = self.plot_info["root_pos"][r_n]["y"]
+                    try:
+                        main_root_node_y = self.plot_info["root_pos"][r_n]["y"]
+                    except KeyError as e:
+                        print("BROKE YOLOPLOT 147")
+                        print(e)
+                        print(d_n)
+                        print(main_daughter_edge)
+                        sys.exit()
                     break
 
             # Add root of daughter branch

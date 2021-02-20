@@ -15,10 +15,10 @@ Will try to keep this updated as codebase develops, but in context
 of the yolo_cell.csv, can do the following:
 
 1. navigate into /src
-2. python run_yolo.csv {trap_num} {t_stop}
+2. python run_yolo.py {trap_num} {t_stop}
 
 I purposely don't have the raw data csv committed, but it is expected to be
-in src/data. Path reference in run_yolo.csv.
+in src/data. Path reference in run_yolo.py.
 
 Will generate some output and launch plotly into a local webpage.
 

@@ -186,7 +186,7 @@ class YoloPlot:
                                       mode='markers',
                                       name=trace_info["name"],
                                       marker=dict(symbol='circle-dot',
-                                                  # size=36,
+                                                  size=10,
                                                   color=trace_info["color"],
                                                   line=dict(color='rgb(0,0,0)', width=0.5)
                                                   ),

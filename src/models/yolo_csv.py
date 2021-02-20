@@ -184,6 +184,12 @@ class YoloCSV:
                 c_count = step_info.count(v)
                 if c_count >= 2:
                     new_steps.append(v)
+                    ###
+                    # Working on 4+ obj logic
+                    # if c_count >= 3:
+                    #
+                    #     continue_steps.append(v)
+                    ###
                     continue
                 continue_steps.append(v)
 

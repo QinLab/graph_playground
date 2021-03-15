@@ -101,7 +101,7 @@ class YoloCSV:
 
         return res
 
-    def to_graph_dict(self, trap_num, t_stop):
+    def to_graph_info(self, trap_num, t_stop):
         """
         Attempts to parse a yolo.csv into a tree data structure that can then be used for further analysis.
         Good amount of in-line doc to cover how its done.
@@ -112,6 +112,8 @@ class YoloCSV:
         """
 
         graph_dict = {}
+        check_data = []
+        time_num_obj = []
 
         # Return a copy of the source data filtered to specific trap number and t_stop.
         df = self.query(trap_num=trap_num, t_start=0, t_stop=t_stop, write_csv=True)
@@ -133,6 +135,9 @@ class YoloCSV:
 
             # The number of data points per time-step dictates behavior.
             len_time_step = len(time_df.index)
+
+            # Tracking Obj at time step - for use on graph -- TODO ADD ERROR CHECK?COLOR
+            time_num_obj.append([t, len_time_step])
 
             # Length of 1 indicates no branching and/or start.
             if len_time_step == 1:
@@ -182,15 +187,17 @@ class YoloCSV:
 
             for v in step_info:
                 c_count = step_info.count(v)
+                # CHECK CASE, n >= 3 of same instance possible error, will need to watch this.
+                if c_count >= 3:
+                    did_error = True
+                    check_count = check_data.count(v)
+                    if check_count != c_count-1:
+                        check_data.append(v)
+                # Duplicates from above end up get filtered out below in new_steps during set conversion.
                 if c_count >= 2:
                     new_steps.append(v)
-                    ###
-                    # Working on 4+ obj logic
-                    # if c_count >= 3:
-                    #
-                    #     continue_steps.append(v)
-                    ###
                     continue
+
                 continue_steps.append(v)
 
             new_steps = [list(x) for x in set(tuple(x) for x in new_steps)]
@@ -210,7 +217,6 @@ class YoloCSV:
 
             # Could simplify
             for v in new_steps:
-                print("NEW STEP", v)
                 pred_id = v[3]
                 time_num = v[1]
                 node_name = "{}.{}".format(int(time_num), int(pred_id))
@@ -248,5 +254,12 @@ class YoloCSV:
         for k in graph_dict:
             graph_dict[k] = sorted(graph_dict[k])
 
-        return graph_dict, {"trap_num": trap_num, "t_stop": t_stop}  # Will prob clean this up, but this was quick..
+        graph_info = dict()
+        graph_info["graph_dict"] = graph_dict
+        graph_info["trap_num"] = trap_num
+        graph_info["t_stop"] = t_stop
+        graph_info["check_data"] = check_data
+        graph_info["time_num_obj"] = time_num_obj
+
+        return graph_info
 

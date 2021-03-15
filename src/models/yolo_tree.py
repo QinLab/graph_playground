@@ -10,9 +10,8 @@ graph_dict in init is the result of YoloCSV.to_graph_dict()
 
 class YoloTree:
 
-
-    def __init__(self, graph_dict):
-        self.graph_dict = graph_dict
+    def __init__(self, graph_info):
+        self.graph_dict = graph_info["graph_dict"]
         self.tree_dict = {}
         self.tree_info = {}
         self._on_init()
@@ -61,7 +60,6 @@ class YoloTree:
                     if last_branch_edges[-1] == edge:
                         self.tree_dict[branch_node].append(node)
                         edges.remove(edge)
-
 
             # Check remaining nodes for change in predecessorID. This indicates a branch may have formed here.
             for edge in edges:

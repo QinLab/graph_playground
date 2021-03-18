@@ -36,7 +36,7 @@ COLOR_LU = {"1": {"symbol": "#00ff00", "line": "rgb(0, 255, 0)"},  # Green
             "2": {"symbol": "#ff0000", "line": "rgb(255, 0, 0)"},   # Red
             "3": {"symbol": "#0000ff", "line": "rgb(0, 0, 255)"},   # Blue
             "4": {"symbol": "#ff8000", "line": "rgb(255, 128, 0)"},  # Orange
-            "5": {"symbol": "#ffff00", "line": "rgb(255, 255, 0)"},  # Yellow
+            "5": {"symbol": "#ff00ff", "line": "rgb(255, 0, 255)"},  # Pink
             "6": {"symbol": "", "line": ""},
             "7": {"symbol": "", "line": ""},
             "8": {"symbol": "", "line": ""},
@@ -238,6 +238,48 @@ class YoloPlotTwo:
                     trace_info["x"].append(x)
                     trace_info["y"].append(y)
                     trace_info["labels"].append(daughter_node)
+
+                    # Check if one of these nodes is a sub_branch... # NOTE NEED TO REWORK THIS, BUT KINDA WORKS.
+                    # d_y_multiplier = 1
+                    if daughter_node in self.yolo_tree.tree_info["branch_nodes"]:
+
+                        # Find The Edge
+                        d_edge_node = None
+                        for d_branch_edge in self.yolo_tree.tree_info["branch_edges"]:
+                            if d_branch_edge[0] == daughter_node:
+                                d_edge_node = d_branch_edge[1]
+                                break
+
+                        trace_info_d = self._make_trace_info()
+                        pred_id_d = d_edge_node[-1]
+                        trace_info_d["name"] = "{}_daughter_lines".format(pred_id)
+                        trace_info_d["mode"] = "lines"
+                        trace_info_d["color"] = COLOR_LU[pred_id_d]["symbol"]
+                        trace_info_d["line_color"] = COLOR_LU[pred_id_d]["line"]
+
+                        # Add Daughter Branch Node Connection
+                        d_x = x
+                        d_y = y
+                        trace_info_d["x"].append(d_x)
+                        trace_info_d["y"].append(d_y)
+                        trace_info_d["labels"].append(daughter_node)
+
+                        # Add Edge Node Connection
+                        d_x = int(d_edge_node.split(".", 1)[0])
+                        d_y = (y + (y_branch_offset / 2)*y_multiplier)
+                        trace_info_d["x"].append(d_x)
+                        trace_info_d["y"].append(d_y)
+                        trace_info_d["labels"].append(d_edge_node)
+
+                        # Add Branch Daughter Nodes
+                        for d_daughter_node in self.yolo_tree.tree_dict[d_edge_node]:
+                            d_x = int(d_daughter_node.split(".", 1)[0])
+                            d_y = (y + (y_branch_offset / 2)*y_multiplier)
+                            trace_info_d["x"].append(d_x)
+                            trace_info_d["y"].append(d_y)
+                            trace_info_d["labels"].append(d_daughter_node)
+
+                        traces.append(trace_info_d)
 
                 y_multiplier *= -1
                 traces.append(trace_info)

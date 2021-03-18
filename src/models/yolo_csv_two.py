@@ -131,8 +131,14 @@ class YoloCSVTwo:
                 print("GOT BRANCH:", branch_node_name, step_arr, "NextPredID:{}".format(next_pred_id))
                 step["predecessorID"] = next_pred_id
                 graph_helper["pred_id_last_node"][step["predecessorID"]] = branch_node_name
+                active_pred_ids += [next_pred_id]
 
             parsed_steps.append(step_arr)
+
+        # Clear Non-Active Pred Id's
+        # for k in graph_helper["pred_id_last_node"]:
+        #     if k not in active_pred_ids:
+        #         graph_helper["pred_id_last_node"][k] = None
 
         return step_info
 
@@ -203,6 +209,7 @@ class YoloCSVTwo:
                     graph_dict["graph"][pred_id_last_node_name].append(node_name)
                 except KeyError:
                     print("Error Pred_Id_Last_Node_Name")
+                    print(node)
                     print(graph_helper)
                     sys.exit()
 

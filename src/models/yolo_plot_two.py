@@ -32,16 +32,16 @@ https://www.w3schools.com/colors/colors_picker.asp
 
 """
 
-COLOR_LU = {"1": {"symbol": "#00ff00", "line": "rgb(0, 255, 0)"},  # Green
-            "2": {"symbol": "#ff0000", "line": "rgb(255, 0, 0)"},   # Red
-            "3": {"symbol": "#0000ff", "line": "rgb(0, 0, 255)"},   # Blue
-            "4": {"symbol": "#ff8000", "line": "rgb(255, 128, 0)"},  # Orange
-            "5": {"symbol": "#ff00ff", "line": "rgb(255, 0, 255)"},  # Pink
-            "6": {"symbol": "", "line": ""},
-            "7": {"symbol": "", "line": ""},
-            "8": {"symbol": "", "line": ""},
-            "9": {"symbol": "", "line": ""},
-            "10":{"symbol": "", "line": ""}}
+COLOR_LU = {"1": {"symbol": "#000000", "line": "rgb(0, 0, 0)"},      # Black
+            "2": {"symbol": "#ff0000", "line": "rgb(255, 0, 0)"},    # Red
+            "3": {"symbol": "#00ff00", "line": "rgb(0, 255, 0)"},    # Green
+            "4": {"symbol": "#0000ff", "line": "rgb(0, 0, 255)"},    # Blue
+            "5": {"symbol": "#ff8000", "line": "rgb(255, 128, 0)"},  # Orange
+            "6": {"symbol": "#00ff80", "line": "rgb(0, 255, 128)"},  # Md Green
+            "7": {"symbol": "#0080ff", "line": "rgb(128, 0, 255)"},  # Purple
+            "8": {"symbol": "#ff4000", "line": "rgb(255, 64, 0)"},   # Light Orange
+            "9": {"symbol": "#00ff40", "line": "rgb(0, 255, 64)"},   # Light Green
+            "10": {"symbol": "#4000ff", "line": "rgb(64, 0, 255)"}}  # Light Purple
 
 
 class YoloPlotTwo:
@@ -114,12 +114,15 @@ class YoloPlotTwo:
         Doc Doc Doc
         """
 
+        # print("PLOT INFO")
+        # print(len(self.graph_info["time_num_obj"]))
+
         # To Establish X Bounds, check for max length of main branches
-        max_main_branch_length = 0
-        for n in self.yolo_tree.tree_info["root_nodes"]:
-            main_branch_length = len(self.yolo_tree.tree_dict[n])
-            if main_branch_length > max_main_branch_length:
-                max_main_branch_length = main_branch_length
+        # max_main_branch_length = 0
+        # for n in self.yolo_tree.tree_info["root_nodes"]:
+        #     main_branch_length = len(self.yolo_tree.tree_dict[n])
+        #     if main_branch_length > max_main_branch_length:
+        #         max_main_branch_length = main_branch_length
 
         # To Establish Y bounds, check for max length of daughter branches
         daughter_nodes = [n for n in self.yolo_tree.tree_dict if n not in self.yolo_tree.tree_info["root_nodes"]]
@@ -129,7 +132,7 @@ class YoloPlotTwo:
             if daughter_branch_length > max_daughter_branch_length:
                 max_daughter_branch_length = daughter_branch_length
 
-        self.plot_info["x_bound"] = max_main_branch_length + 3
+        self.plot_info["x_bound"] = len(self.graph_info["time_num_obj"]) + 3
         self.plot_info["y_bound"] = (max_daughter_branch_length + 2) * 2
 
     def _establish_root_positions(self):

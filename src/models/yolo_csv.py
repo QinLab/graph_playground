@@ -12,6 +12,7 @@ Split occurs when multiple objs exist in same trap and share the same predeccorI
 Ask about Trap #4 (and how traps are related).
 """
 
+
 class YoloCSV:
 
     def __init__(self, file_path):
@@ -153,12 +154,10 @@ class YoloCSV:
 
                 # Will need to update this to handle Traps w/ multiple main branches
                 root_pred_ids.append(pred_id)
-                # *** Update Start
                 # *** Track Pred ID
                 if pred_id not in pred_last_lu:
                     pred_last_lu[pred_id] = {}
                     pred_last_lu[pred_id]["last_node_name"] = None
-                # *** Update End
 
                 # Node name is time_num.pred_id
                 node_name = "{}.{}".format(int(time_num), int(pred_id))
